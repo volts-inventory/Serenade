@@ -20,6 +20,13 @@ recon → enum → triage → exploit → post-exploit → privesc → lateral �
 
 > *It is a story about an operator who had run one engagement too many — too many half-remembered playbooks, too many tools left running against the wrong subnet, too many findings written up at 3am. They wanted an agent that would run the whole pipeline on its own, but one that could not be talked into stepping out of scope, and one that wrote down every decision it made. So they built Serenade: autonomous from recon to report, but never trusted further than three independent gates will allow.*
 
+<div align="center">
+
+**⚠️ Authorized use only.** Serenade is a pentesting tool — use it solely on systems you own or are
+authorized in writing to administer. [Full disclaimer ↓](#authorized-use--disclaimer)
+
+</div>
+
 ---
 
 **Table of Contents**
@@ -31,6 +38,7 @@ recon → enum → triage → exploit → post-exploit → privesc → lateral �
 - [CLI reference](#cli-reference)
 - [Documentation](#documentation)
 - [Getting help](#getting-help)
+- [Authorized use & disclaimer](#authorized-use--disclaimer)
 - [Contribute](#contribute)
 
 ---
@@ -171,6 +179,26 @@ docs/                   documentation set
 - **Inspect a running engagement.** `serenade engagement watch <id>` tails the live event stream; `serenade engagement summary <id>` prints the operator digest (spend, vetoes, findings).
 - **Read the audit log.** Every gate decision and stage transition is recorded and exported with the report — the fastest way to understand *why* the agent did or didn't do something.
 - **Understand the internals.** [ARCHITECTURE.md](./docs/ARCHITECTURE.md) walks the topology, the agent loop, the three gates, and the world-state model.
+
+# Authorized use & disclaimer
+
+> [!CAUTION]
+> Use it **only** on systems you own or are explicitly authorized in
+> writing to administer.
+
+Usage of Serenade for pentesting or acting on systems without prior
+mutual consent is illegal. It is the end user's responsibility to obey all
+applicable local, state, national, and international laws, and to obtain any
+authorization required before operating against a host. The authors and
+contributors assume no liability and are not responsible for any misuse or
+damage caused by this program.
+
+Serenade is provided "as is", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose, and non-infringement. In no event shall
+the authors or contributors be liable for any claim, damages, or other
+liability arising from, out of, or in connection with the software or its
+use.
 
 ## Contribute
 
