@@ -1,0 +1,143 @@
+/* Serenade TUI — minimal styling. Textual CSS. */
+
+Screen {
+    background: $surface;
+}
+
+#main-grid {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#sidebar {
+    width: 32;
+    border-right: solid $primary;
+    height: 1fr;
+    padding: 0 1;
+}
+
+#sidebar-title {
+    text-style: bold;
+    color: $primary;
+    padding: 1 0;
+}
+
+#engagement-table {
+    height: 1fr;
+}
+
+#right-pane {
+    width: 1fr;
+    height: 1fr;
+    padding: 0 1;
+}
+
+#status-bar {
+    dock: bottom;
+    height: 1;
+    background: $primary 30%;
+    color: $text;
+    padding: 0 1;
+}
+
+#login-container {
+    align: center middle;
+    height: 1fr;
+}
+
+.login-box {
+    border: round $primary;
+    padding: 1 2;
+    width: 64;
+    height: auto;
+    background: $boost;
+}
+
+.login-title {
+    text-style: bold;
+    color: $primary;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+.login-error {
+    color: $error;
+    text-align: center;
+    height: auto;
+}
+
+.login-status {
+    color: $text-muted;
+    text-align: center;
+    height: auto;
+}
+
+#login-buttons {
+    align: center middle;
+    height: auto;
+    margin-top: 1;
+}
+
+#login-buttons Button {
+    margin: 0 1;
+}
+
+.form-label {
+    padding: 1 0 0 0;
+    color: $text-muted;
+}
+
+.tab-pane {
+    padding: 1;
+    height: 1fr;
+}
+
+.event-log {
+    height: 1fr;
+    border: round $primary 30%;
+}
+
+#operator-exec-form {
+    height: auto;
+}
+
+#operator-exec-output {
+    border: round $primary 30%;
+    height: 1fr;
+    padding: 1;
+}
+
+Button.primary {
+    background: $primary;
+}
+
+Button.danger {
+    background: $error;
+}
+
+.muted {
+    color: $text-muted;
+}
+
+#new-engagement-container {
+    align: center middle;
+    padding: 1;
+}
+
+#new-engagement-box {
+    border: round $primary;
+    padding: 1 2;
+    width: 80%;
+    max-width: 100;
+    height: auto;
+}
+
+.field-error {
+    color: $error;
+    height: auto;
+}
+
+#approval-notes {
+    height: 3;
+}

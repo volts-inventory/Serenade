@@ -1,0 +1,30 @@
+# Compose overlay declaring the windows-worker as an EXTERNAL service.
+#
+# We don't run Windows in Docker (Linux containers can't host Windows). This
+# file's purpose is to make the wiring explicit: the orchestrator publishes
+# jobs to Redis on `serenade:windows_worker:jobs`, and the operator stands
+# up the Windows worker themselves (Hyper-V VM, Firecracker, bare-metal lab).
+#
+# Bring up the orchestrator with the windows-worker integration enabled:
+#   docker compose -f docker-compose.yml -f clients/windows_worker/docker-compose.windows-worker.yml up
+
+version: "3.9"
+
+services:
+  orchestrator:
+    environment:
+      - SERENADE_WINDOWS_WORKER_ENABLED=1
+      - SERENADE_WINDOWS_WORKER_AUTH_TOKEN=${SERENADE_WINDOWS_WORKER_AUTH_TOKEN:?must set in .env}
+      - SERENADE_WINDOWS_WORKER_QUEUE=serenade:windows_worker:jobs
+      - SERENADE_WINDOWS_WORKER_RESULT_QUEUE=serenade:windows_worker:results
+      - SERENADE_WINDOWS_WORKER_HEARTBEAT_KEY=serenade:windows_worker:heartbeat
+      # Wall-clock max for a single Windows job; orchestrator-side guard against
+      # dead workers. Defaults to 5 minutes.
+      - SERENADE_WINDOWS_WORKER_JOB_TIMEOUT_SECONDS=300
+
+  # Reminder service: not actually started. Just here for `docker compose config`
+  # to surface the windows-worker as a known integration point.
+  windows-worker-stub:
+    image: alpine:3.19
+    command: ["sh", "-c", "echo 'Windows worker runs out-of-band; see windows_worker/README.md' && sleep infinity"]
+    profiles: ["docs-only"]

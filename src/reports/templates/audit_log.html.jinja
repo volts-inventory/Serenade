@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Serenade Audit Log Export</title>
+  <style>
+    @page { size: A4; margin: 1.5cm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: .7rem; color: #64748b; } }
+    body { font-family: -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; line-height: 1.4; font-size: .85rem; }
+    h1 { color: #0b1426; border-bottom: 3px solid #2563eb; padding-bottom: .5rem; }
+    .meta { color: #475569; font-size: .85rem; margin-bottom: 1rem; }
+    .doc-sig { background: #f1f5f9; border-left: 4px solid #2563eb; padding: .75rem 1rem; margin: 1rem 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .75rem; word-break: break-all; }
+    .chain-ok { background: #ecfdf5; border-left: 4px solid #059669; padding: .6rem 1rem; margin: 1rem 0; font-weight: 700; color: #065f46; }
+    .chain-bad { background: #fef2f2; border-left: 4px solid #dc2626; padding: .6rem 1rem; margin: 1rem 0; font-weight: 700; color: #991b1b; }
+    table.audit { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    table.audit th, table.audit td { padding: .25rem .4rem; border: 1px solid #cbd5e1; text-align: left; vertical-align: top; }
+    table.audit th { background: #f1f5f9; font-size: .75rem; }
+    table.audit td { font-size: .7rem; }
+    table.audit td.ts { font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+    table.audit td.act { font-weight: 600; }
+    table.audit td.sig { font-family: ui-monospace, Menlo, monospace; font-size: .6rem; color: #64748b; word-break: break-all; max-width: 6cm; }
+    table.audit td.payload { font-family: ui-monospace, Menlo, monospace; font-size: .65rem; word-break: break-word; max-width: 5cm; }
+    table.audit td.hash { font-family: ui-monospace, Menlo, monospace; font-size: .55rem; color: #64748b; word-break: break-all; max-width: 4cm; }
+    table.audit td.seq { font-family: ui-monospace, Menlo, monospace; text-align: right; }
+    .footer { margin-top: 1.5rem; padding-top: .5rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: .7rem; }
+  </style>
+</head>
+<body>
+  <h1>Serenade Audit Log Export</h1>
+  <div class="meta">
+    Generated: {{ generated_at }}<br>
+    Rows: {{ rows|length }}<br>
+    {% if engagement_id %}Engagement filter: <code>{{ engagement_id }}</code><br>{% endif %}
+    Algorithm: HMAC-SHA256 (per-row + whole-doc)
+  </div>
+
+  {% if chain_status.verified %}
+  <div class="chain-ok">
+    At-rest hash chain: {{ chain_status.label }} — every row's master-key HMAC
+    and prev_hash link recompute correctly.
+  </div>
+  {% else %}
+  <div class="chain-bad">
+    At-rest hash chain: {{ chain_status.label }}{% if chain_status.detail %} — {{ chain_status.detail }}{% endif %}.
+    The audit log has been altered (edited, deleted, reordered, or not yet verified).
+  </div>
+  {% endif %}
+
+  <h2 style="font-size:1rem;color:#0b1426;border-bottom:1px solid #cbd5e1;padding-bottom:.25rem;">Document signature</h2>
+  <div class="doc-sig">
+    <strong>HMAC over canonical JSONL:</strong><br>
+    {{ doc_signature }}
+  </div>
+  <p style="font-size:.7rem;color:#475569;">
+    To verify: reconstruct the canonical JSONL from the table below
+    (one row per line, fields in column order, tab between row and per-line signature),
+    then HMAC-SHA256 with the operator's audit-export key.
+    Per-row signatures cover each line independently.
+  </p>
+
+  <h2 style="font-size:1rem;color:#0b1426;border-bottom:1px solid #cbd5e1;padding-bottom:.25rem;">Events</h2>
+  <table class="audit">
+    <thead>
+      <tr>
+        <th>Seq</th>
+        <th>Timestamp (UTC)</th>
+        <th>Engagement</th>
+        <th>Actor</th>
+        <th>Action</th>
+        <th>Payload</th>
+        <th>prev_hash</th>
+        <th>row_hash</th>
+        <th>Signature</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td class="seq">{{ row.seq if row.seq is not none else "—" }}</td>
+        <td class="ts">{{ row.ts }}</td>
+        <td>{{ row.engagement_id or "—" }}</td>
+        <td>{{ row.actor }}</td>
+        <td class="act">{{ row.action }}</td>
+        <td class="payload">{{ row.payload_repr }}</td>
+        <td class="hash">{{ row.prev_hash or "—" }}</td>
+        <td class="hash">{{ row.row_hash or "—" }}</td>
+        <td class="sig">{{ row.sig }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Serenade — automated pentest platform · audit-log export ·
+    HMAC key configured via <code>SERENADE_AUDIT_EXPORT_SECRET</code>
+  </div>
+</body>
+</html>

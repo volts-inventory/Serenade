@@ -1,0 +1,16 @@
+{
+  "_comment": "Copy to agent.config.json and edit. Path: C:\\Serenade\\agent.config.json.",
+  "redis_host": "10.0.0.10",
+  "redis_port": 6379,
+  "redis_password": "REPLACE_ME",
+  "job_queue": "serenade:windows_worker:jobs",
+  "result_queue": "serenade:windows_worker:results",
+  "heartbeat_key": "serenade:windows_worker:heartbeat",
+  "auth_token": "REPLACE_ME_LONG_RANDOM_STRING",
+  "tools_dir": "C:\\Serenade\\tools",
+  "log_path": "C:\\Serenade\\logs\\agent.log",
+  "_isolation_comment": "R3: self-report the isolation primitive. Orchestrator refuses high-risk jobs to 'none' unless SERENADE_WINDOWS_WORKER_ALLOW_UNSAFE_ISOLATION=1. One of: hyperv-snapshot | firecracker | bare-metal | none.",
+  "isolation_mode": "hyperv-snapshot",
+  "_signing_key_comment": "R3: shared HMAC key (>=16 chars) used to verify 'assembly' jobs. MUST match SERENADE_WINDOWS_WORKER_SIGNING_KEY on the orchestrator. Without this set, assembly jobs are rejected.",
+  "signing_key": "REPLACE_ME_LONG_RANDOM_HMAC_KEY"
+}

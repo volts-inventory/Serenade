@@ -1,0 +1,29 @@
+# DVWA lab — for E2E testing the Serenade pipeline.
+#
+# Brought up SEPARATELY from the main stack via:
+#   docker compose -f content/targets/dvwa/docker-compose.yml up -d
+#
+# Lives on the `sandbox-net` network so per-engagement sandbox containers
+# can reach it. The DVWA scope CIDR (172.30.0.0/24) matches the demo seed
+# engagement's scope.
+
+services:
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    container_name: serenade-target-dvwa
+    networks:
+      sandbox-net:
+        ipv4_address: 172.30.0.100
+    ports:
+      - "127.0.0.1:8080:80"   # bind to localhost only; never publish a vulnerable target externally
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  sandbox-net:
+    external: true
+    name: serenade_sandbox-net

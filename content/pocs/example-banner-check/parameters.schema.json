@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "example-banner-check parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "port"],
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "IP or hostname of the in-scope target"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "default": 5
+    }
+  }
+}

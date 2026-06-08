@@ -1,0 +1,53 @@
+# Destructive-gate fixture — NON-FUNCTIONAL placeholder.
+#
+# This entry exists ONLY to exercise the destructive safety gate
+# (tracking issue #112, P2 #3). It carries `risk.class: destructive` and
+# `risk.destructive: true` so that:
+#   - PoCDispatcher.can_auto_run returns (False, "destructive_without_optin")
+#     for a normal engagement, and
+#   - it is only auto-runnable when the engagement sets `destructive_opt_in`.
+#
+# It contains NO weaponized logic. `build_invocation` is a non-functional
+# placeholder that raises NotImplementedError; a destructive PoC is reported
+# as a finding and NEVER executed. Do not implement a real payload here.
+id: destructive-gate-fixture
+provenance:
+  - source: original_research
+    ref: "serenade/pocs/destructive-gate-fixture — gate test fixture, not a real PoC"
+
+target:
+  service: any
+  version_range: "*"
+  platforms: [linux, windows, multiple]
+
+parameters:
+  schema_ref: ./parameters.schema.json
+
+risk:
+  class: destructive
+  destructive: true
+  modifies_target: true
+  modifies_filesystem: true
+  network_egress_from_target: false
+  detection_likelihood: high
+
+auto_run:
+  # Default-allow so the destructive gate (not the allowed/approval gates) is
+  # what the test observes. The destructive flag still blocks auto-run unless
+  # the engagement opts in.
+  allowed: true
+  requires_approval: false
+  preconditions:
+    - target_not_in_no_exploit_list: true
+
+rollback:
+  available: false
+  notes: "N/A — never executed; reported as a finding."
+
+license:
+  spdx: MIT
+  attribution: "Serenade destructive-gate test fixture"
+
+ci:
+  test_command: "pytest test/test_gate.py"
+  lab: ""

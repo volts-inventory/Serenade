@@ -1,0 +1,77 @@
+# Sandbox image: holds all the recon/enum tooling.
+# Sandboxes are spawned per engagement; this image is never executed against
+# customer traffic directly without a scope-enforcing network policy in front.
+FROM debian:12-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nmap \
+    masscan \
+    dnsutils \
+    dnsrecon \
+    whois \
+    netcat-openbsd \
+    curl \
+    wget \
+    git \
+    python3 \
+    python3-pip \
+    python3-venv \
+    ca-certificates \
+    smbclient \
+    ldap-utils \
+    snmp \
+    iproute2 \
+    iptables \
+    jq \
+    ssh-client \
+    libssl-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# searchsploit / exploitdb (GPL-2.0, exec only)
+RUN git clone --depth 1 https://gitlab.com/exploit-database/exploitdb.git /opt/exploitdb \
+    && ln -sf /opt/exploitdb/searchsploit /usr/local/bin/searchsploit
+
+# Go-based tools (httpx, nuclei, subfinder, ffuf, feroxbuster equivalent)
+# Installed via static binaries to keep image deterministic.
+ARG NUCLEI_VERSION=3.3.4
+ARG HTTPX_VERSION=1.6.9
+ARG SUBFINDER_VERSION=2.6.6
+ARG FFUF_VERSION=2.1.0
+
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) GOARCH=amd64;; \
+      arm64) GOARCH=arm64;; \
+      *) echo "unsupported arch $arch"; exit 1;; \
+    esac; \
+    curl -fsSLo /tmp/nuclei.zip https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_${GOARCH}.zip; \
+    curl -fsSLo /tmp/httpx.zip https://github.com/projectdiscovery/httpx/releases/download/v${HTTPX_VERSION}/httpx_${HTTPX_VERSION}_linux_${GOARCH}.zip; \
+    curl -fsSLo /tmp/subfinder.zip https://github.com/projectdiscovery/subfinder/releases/download/v${SUBFINDER_VERSION}/subfinder_${SUBFINDER_VERSION}_linux_${GOARCH}.zip; \
+    curl -fsSLo /tmp/ffuf.tgz https://github.com/ffuf/ffuf/releases/download/v${FFUF_VERSION}/ffuf_${FFUF_VERSION}_linux_${GOARCH}.tar.gz; \
+    apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
+    unzip /tmp/nuclei.zip -d /usr/local/bin nuclei; \
+    unzip /tmp/httpx.zip -d /usr/local/bin httpx; \
+    unzip /tmp/subfinder.zip -d /usr/local/bin subfinder; \
+    tar -C /usr/local/bin -xzf /tmp/ffuf.tgz ffuf; \
+    chmod +x /usr/local/bin/nuclei /usr/local/bin/httpx /usr/local/bin/subfinder /usr/local/bin/ffuf; \
+    rm -f /tmp/nuclei.zip /tmp/httpx.zip /tmp/subfinder.zip /tmp/ffuf.tgz
+
+# Python tools (NetExec replaces CrackMapExec)
+RUN pip install --break-system-packages --no-cache-dir \
+    netexec \
+    impacket \
+    bloodhound
+
+# Wordlists (small subset for default scans; mount larger lists at runtime)
+RUN mkdir -p /usr/share/wordlists && \
+    curl -fsSLo /usr/share/wordlists/common.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt && \
+    curl -fsSLo /usr/share/wordlists/dirb-common.txt https://raw.githubusercontent.com/v0re/dirb/master/wordlists/common.txt || true
+
+# Nuclei templates (operator updates on first run)
+RUN nuclei -update-templates || true
+
+WORKDIR /work
+ENV PATH="/usr/local/bin:${PATH}"

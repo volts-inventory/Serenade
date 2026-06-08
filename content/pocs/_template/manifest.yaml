@@ -1,0 +1,40 @@
+# Curated PoC manifest template. Copy this directory, set fields, implement exploit.py + test/.
+id: REPLACE_WITH_ID                # e.g. CVE-2021-44228-log4shell
+provenance:
+  - source: cve_writeup            # exploitdb | metasploit | nuclei | cve_writeup | original_research
+    ref: ""                        # EDB-ID | module path | template id | URL
+
+target:
+  service: REPLACE                 # e.g. log4j
+  version_range: ""                # e.g. ">=2.0,<2.15.0"
+  platforms: [linux]               # linux | windows | multiple
+
+parameters:
+  schema_ref: ./parameters.schema.json
+
+risk:
+  class: exploit                   # recon | enum | exploit | post-exploit | destructive
+  destructive: false
+  modifies_target: true
+  modifies_filesystem: false
+  network_egress_from_target: false
+  detection_likelihood: medium
+
+auto_run:
+  allowed: false                   # default-deny; flip only after CI green and review
+  requires_approval: true
+  preconditions:
+    - "engagement.exploitation_mode != 'passive'"
+    - "target not in engagement.no_exploit_list"
+
+rollback:
+  available: false
+  notes: ""
+
+license:
+  spdx: UNKNOWN                    # MUST be set to a real SPDX identifier before merge
+  attribution: ""
+
+ci:
+  test_command: "pytest test/test_exploit.py"
+  lab: ""

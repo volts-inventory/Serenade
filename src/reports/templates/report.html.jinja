@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ draft.title }} — Serenade</title>
+  <style>
+    body { font-family: -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; max-width: 980px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.5; }
+    h1, h2, h3 { color: #0b1426; }
+    h1 { border-bottom: 3px solid #2563eb; padding-bottom: .5rem; }
+    h2 { border-bottom: 1px solid #cbd5e1; padding-bottom: .25rem; margin-top: 2rem; }
+    .meta { color: #475569; font-size: .9rem; margin-bottom: 1.5rem; }
+    .summary { background: #f1f5f9; padding: 1rem 1.25rem; border-left: 4px solid #2563eb; border-radius: 4px; }
+    .finding { border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem 1.25rem; margin: .75rem 0; }
+    .finding.critical { border-left: 5px solid #b91c1c; }
+    .finding.high     { border-left: 5px solid #c2410c; }
+    .finding.medium   { border-left: 5px solid #b45309; }
+    .finding.low      { border-left: 5px solid #65a30d; }
+    .finding.info     { border-left: 5px solid #2563eb; }
+    .finding.vetoed   { background: #fef2f2; border-left-color: #dc2626; }
+    .severity-tag { display: inline-block; padding: .15rem .5rem; border-radius: 3px; font-size: .75rem; font-weight: 600; text-transform: uppercase; }
+    .severity-critical { background: #fee2e2; color: #991b1b; }
+    .severity-high     { background: #ffedd5; color: #9a3412; }
+    .severity-medium   { background: #fef3c7; color: #92400e; }
+    .severity-low      { background: #ecfccb; color: #3f6212; }
+    .severity-info     { background: #dbeafe; color: #1e40af; }
+    .veto-note { background: #fef2f2; color: #991b1b; padding: .5rem; border-radius: 3px; margin-top: .5rem; font-size: .85rem; }
+    .evidence { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; background: #f8fafc; padding: .5rem; border-radius: 3px; overflow-x: auto; }
+    .references { font-size: .85rem; color: #475569; }
+    .coverage-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .coverage-table th, .coverage-table td { padding: .5rem .75rem; border: 1px solid #e2e8f0; text-align: left; }
+    .coverage-table th { background: #f1f5f9; }
+    .footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: .8rem; }
+    code { background: #f1f5f9; padding: 0 .25rem; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>{{ draft.title }}</h1>
+  <div class="meta">
+    Engagement ID: <code>{{ draft.engagement_id }}</code> &nbsp;|&nbsp;
+    Generated: {{ generated_at }}
+  </div>
+
+  <h2>Executive Summary</h2>
+  <div class="summary">{{ draft.executive_summary|default("(no summary generated)", true) }}</div>
+
+  <h2>Coverage</h2>
+  <table class="coverage-table">
+    <thead><tr><th>Kind</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for k, v in draft.coverage.items() %}
+        <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if draft.attack_paths %}
+    <h2>Attack Paths</h2>
+    <ul>
+      {% for p in draft.attack_paths %}
+        <li><strong>{{ p.objective }}</strong> — cost {{ p.cost }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2>Findings</h2>
+  {% if not draft.findings %}
+    <p>No findings recorded for this engagement.</p>
+  {% endif %}
+  {% for f in draft.findings %}
+    <div class="finding {{ f.severity }}{% if f.critic_verdict == 'veto' %} vetoed{% endif %}">
+      <h3>
+        <span class="severity-tag severity-{{ f.severity }}">{{ f.severity }}</span>
+        {{ f.title }}
+      </h3>
+      <p>{{ f.description }}</p>
+      {% if f.cvss_v3_1 %}<div><strong>CVSS v3.1:</strong> {{ f.cvss_v3_1 }}</div>{% endif %}
+      {% if f.cwe %}<div><strong>CWE:</strong> {{ f.cwe }}</div>{% endif %}
+      {% if f.cve %}<div><strong>CVE:</strong> {{ f.cve|join(", ") }}</div>{% endif %}
+      {% if f.affected_assets %}<div><strong>Affected assets:</strong> {{ f.affected_assets|join(", ") }}</div>{% endif %}
+      {% if f.evidence_refs %}
+        <div><strong>Evidence:</strong></div>
+        {% for e in f.evidence_refs %}
+          <div class="evidence">{{ e.excerpt|default("(no excerpt)", true) }} &nbsp;<span style="color:#64748b">[tool_run {{ e.tool_run_id|default("?", true) }}]</span></div>
+        {% endfor %}
+      {% endif %}
+      {% if f.remediation %}<div><strong>Remediation:</strong> {{ f.remediation }}</div>{% endif %}
+      {% if f.references %}<div class="references"><strong>References:</strong> {{ f.references|join(", ") }}</div>{% endif %}
+      {% if f.critic_verdict and f.critic_verdict != 'pending' %}
+        <div class="veto-note">
+          <strong>Report critic:</strong> {{ f.critic_verdict }}{% if f.critic_concern %} — {{ f.critic_concern }}{% endif %}
+        </div>
+      {% endif %}
+      {% if f.override_justification %}
+        <div class="veto-note" style="background:#ecfccb;color:#3f6212;">
+          <strong>Reviewer override</strong> by {{ f.override_by or "operator" }}{% if f.override_at %} at {{ f.override_at }}{% endif %}:
+          {{ f.override_justification }}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  {% if draft.regressions %}
+    <h2>Pipeline Regressions</h2>
+    <p style="color:#475569;font-size:.9rem">
+      During this engagement we looped back {{ draft.regressions|length }} time(s) to
+      an earlier stage when new evidence required a fresh pass. Each loop
+      was reviewed by the stage-regression council before it fired.
+    </p>
+    <table class="coverage-table">
+      <thead>
+        <tr>
+          <th>Target stage</th>
+          <th>Trigger</th>
+          <th>Council verdict</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in draft.regressions %}
+          <tr>
+            <td><code>{{ r.target_stage }}</code></td>
+            <td>{{ r.trigger_kind }}</td>
+            <td>{{ r.council_decision }}</td>
+            <td>{{ r.rationale }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {# Per-critic breakdown so the auditor sees the dissent that drove the regression. #}
+    {% for r in draft.regressions %}
+      {% if r.member_critiques %}
+        <h3 style="font-size:1rem;margin-top:1rem"><code>{{ r.target_stage }}</code> — council breakdown ({{ r.trigger_kind }})</h3>
+        <table class="coverage-table">
+          <thead>
+            <tr>
+              <th>Critic</th>
+              <th>Verdict</th>
+              <th>Confidence</th>
+              <th>Concern</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in r.member_critiques %}
+              <tr>
+                <td>{{ c.critic_name }}</td>
+                <td>{{ c.verdict }}</td>
+                <td>{{ c.confidence }}</td>
+                <td>{{ c.primary_concern }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if draft.regressions_blocked %}
+    <h3>Regressions Blocked by Council</h3>
+    <p style="color:#475569;font-size:.9rem">
+      {{ draft.regressions_blocked|length }} regression request(s) were evaluated and rejected
+      by the stage-regression council.
+    </p>
+    <table class="coverage-table">
+      <thead>
+        <tr>
+          <th>Target stage</th>
+          <th>Trigger</th>
+          <th>Decision</th>
+          <th>Failure mode</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in draft.regressions_blocked %}
+          <tr>
+            <td><code>{{ r.target_stage }}</code></td>
+            <td>{{ r.trigger_kind }}</td>
+            <td>{{ r.council_decision }}</td>
+            <td>{{ r.failure_mode or "—" }}</td>
+            <td>{{ r.council_rationale[:80] }}{% if r.council_rationale|length > 80 %}…{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if draft.vetoed_findings %}
+    <h2>Appendix: Findings Rejected During Review</h2>
+    <p style="color:#475569;font-size:.9rem">
+      {{ draft.vetoed_findings|length }} candidate finding(s) were proposed
+      by automated analysis but rejected by the report reviewer (typically
+      for weak evidence, version inference, or duplicate of another finding).
+      They are listed here for completeness, not as confirmed findings.
+    </p>
+    {% for f in draft.vetoed_findings %}
+      <div class="finding vetoed">
+        <h3>{{ f.title }}</h3>
+        <p>{{ f.description }}</p>
+        {# Full audit trail per vetoed finding so the customer auditor can
+           pivot to the raw audit_log row and tool runs. #}
+        {% if f.audit_row_id %}
+          <div><strong>Audit row:</strong> <code>{{ f.audit_row_id }}</code></div>
+        {% endif %}
+        {% if f.critic_name %}
+          <div><strong>Vetoed by:</strong> {{ f.critic_name }}{% if f.critic_confidence is not none %} (confidence {{ f.critic_confidence }}){% endif %}</div>
+        {% endif %}
+        <div class="veto-note"><strong>Rationale:</strong> {{ f.critic_concern or "review failed" }}</div>
+        {% if f.tool_run_ids %}
+          <div><strong>Tool run IDs:</strong> {{ f.tool_run_ids|join(", ") }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="footer">
+    Generated by Serenade. Findings are evidence-backed; each excerpt cites the tool_run that produced it.
+  </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+[project]
+name = "serenade"
+version = "0.1.0"
+description = "Autonomous penetration testing tool"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+
+dependencies = [
+    # Core
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "structlog>=24.4",
+    "anyio>=4.6",
+    "httpx>=0.27",
+
+    # LLM
+    "anthropic>=0.39",
+    "langgraph>=0.2.50",
+    "openai>=1.50",  # used for MLX OpenAI-compatible endpoint
+
+    # Credential-secret encryption at rest (Fernet)
+    "cryptography>=41",
+
+    # Persistence
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.20",
+    "alembic>=1.13",
+    "networkx>=3.0",
+    # Reporting
+    "jinja2>=3.1",
+    "weasyprint>=63.0",
+    "markdown-it-py>=3.0",
+
+    # Tool integrations / parsers
+    "defusedxml>=0.7",
+    "pyyaml>=6.0",
+
+    # Constrained decoding for MLX path
+    "jsonschema>=4.23",
+
+]
+
+[project.optional-dependencies]
+windows = [
+    "redis>=5.1",  # only needed for Windows worker VM IPC
+]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "types-pyyaml>=6.0",
+    "respx>=0.21",
+    "freezegun>=1.5",
+]
+tui = [
+    "textual>=0.80",
+    "rich>=13",
+]
+
+[project.scripts]
+serenade = "cli.main:main"
+serenade-tui = "tui.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Repo uses an `src/` layout: every production Python package lives under
+# `src/`, while client/edge code (ui, tui, burp, windows_worker) lives under
+# `clients/`. Hatch's source-mapping re-maps `src/<pkg>` → `<pkg>` and
+# `clients/tui` → `tui` at wheel build time so `from orchestrator...`,
+# `from tui...`, etc. keep working unchanged. For dev/test resolution outside
+# the wheel, see `[tool.pytest.ini_options].pythonpath` below.
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/agents",
+    "src/cli",
+    "src/llm",
+    "src/orchestrator",
+    "src/policy",
+    "src/reports",
+    "src/sandbox",
+    "src/tools",
+    "clients/tui",
+    "src/worker",
+    "src/worldstate",
+]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/agents" = "agents"
+"src/cli" = "cli"
+"src/llm" = "llm"
+"src/orchestrator" = "orchestrator"
+"src/policy" = "policy"
+"src/reports" = "reports"
+"src/sandbox" = "sandbox"
+"src/tools" = "tools"
+"src/worker" = "worker"
+"src/worldstate" = "worldstate"
+"clients/tui" = "tui"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["content/pocs/", "content/targets/", "src/sandbox/runtime/", "src/reports/output/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM", "PL", "RUF"]
+ignore = ["PLR0913", "PLR2004", "PLR0912", "PLR0915"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true   # fastapi/uvicorn/anthropic/jinja2 stubs are optional; silence
+exclude = ["content/pocs/", "content/targets/", "tests/", "infra/alembic/", "src/sandbox/runtime/", "src/reports/output/"]
+# A backlog of ~150 strict-mode findings (mostly Any-typed dict access, generic
+# Tool[_TIn, _TOut] variance, async return-type annotations) is tracked as
+# follow-up; tools, critic, and router are clean against the strict baseline.
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Hatch's [tool.hatch.build.targets.wheel.sources] re-maps `src/<pkg>` →
+# `<pkg>` (and `clients/tui` → `tui`) at wheel build time, but that mapping
+# doesn't apply when pytest runs against the source tree. Add `src/` and
+# `clients/` to sys.path so `from orchestrator import ...`, `from tui import
+# ...`, etc. keep resolving in dev without requiring an editable install.
+pythonpath = ["src", "clients"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: integration tests that need live services",
+    "sandbox: tests that exercise the sandbox runner",
+    "llm: tests that call a real LLM backend",
+]

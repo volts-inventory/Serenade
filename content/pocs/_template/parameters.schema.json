@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PoC parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_url"],
+  "properties": {
+    "target_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Full URL of the target endpoint"
+    }
+  }
+}

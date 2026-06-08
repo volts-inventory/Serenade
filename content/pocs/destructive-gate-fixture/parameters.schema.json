@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "destructive-gate-fixture parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_url"],
+  "properties": {
+    "target_url": {
+      "type": "string",
+      "description": "In-scope target URL (unused; placeholder fixture)"
+    }
+  }
+}

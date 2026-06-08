@@ -1,0 +1,42 @@
+# Example PoC: a benign banner-check that demonstrates the curated-tier contract.
+# This is NOT an exploit — it just connects to a service and reports the banner.
+# Useful as a reference implementation and as a smoke test for the dispatcher.
+id: example-banner-check
+provenance:
+  - source: original_research
+    ref: "serenade/pocs/example-banner-check — internal demo, not a real PoC"
+
+target:
+  service: any
+  version_range: "*"
+  platforms: [linux, windows, multiple]
+
+parameters:
+  schema_ref: ./parameters.schema.json
+
+risk:
+  class: recon
+  destructive: false
+  modifies_target: false
+  modifies_filesystem: false
+  network_egress_from_target: false
+  detection_likelihood: low
+
+auto_run:
+  allowed: true
+  requires_approval: false
+  preconditions:
+    - engagement_mode_in: [passive, normal, aggressive]
+    - target_not_in_no_exploit_list: true
+
+rollback:
+  available: true
+  notes: "Read-only TCP connect; nothing to roll back."
+
+license:
+  spdx: MIT
+  attribution: "Serenade demo PoC"
+
+ci:
+  test_command: "pytest test/test_banner_check.py"
+  lab: ""
